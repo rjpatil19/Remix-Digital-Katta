@@ -1,0 +1,8 @@
+{
+  "name": "Remix Digital कट्टा",
+  "description": "CIBIL Report Analysis \u0026 Resolution Platform for users and financial consultants in India",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
