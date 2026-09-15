@@ -14,7 +14,8 @@ export interface QuotaCheckResult {
 const STORAGE_KEYS = {
   CLIENT_CHECK_COUNT: 'dk_client_check_count',
   CLIENT_PAID_CREDITS: 'dk_client_paid_credits',
-  CONSULTANT_CLIENT_REPORTS: 'dk_consultant_client_reports',
+  PARTNER_CLIENT_REPORTS: 'dk_partner_client_reports',
+  CONSULTANT_CLIENT_REPORTS: 'dk_partner_client_reports', // backward-compatible
 };
 
 export class ReportQuotaService {
@@ -43,11 +44,11 @@ export class ReportQuotaService {
   }
 
   /**
-   * Get report count generated for a specific client under consultant mode
+   * Get report count generated for a specific client under partner mode
    */
-  static getConsultantReportCountForClient(clientId: string): number {
+  static getPartnerReportCountForClient(clientId: string): number {
     try {
-      const stored = localStorage.getItem(STORAGE_KEYS.CONSULTANT_CLIENT_REPORTS);
+      const stored = localStorage.getItem(STORAGE_KEYS.PARTNER_CLIENT_REPORTS);
       const map: Record<string, number> = stored ? JSON.parse(stored) : {};
       // default seeded counts: cli-101 has 1 (so next is 2), cli-102 has 1, cli-103 has 2 (quota full)
       if (map[clientId] !== undefined) {
@@ -62,10 +63,14 @@ export class ReportQuotaService {
     }
   }
 
+  static getConsultantReportCountForClient(clientId: string): number {
+    return this.getPartnerReportCountForClient(clientId);
+  }
+
   /**
    * Check if score generation or check is allowed based on role and rules:
    * Rule 1: Client login limit score generation/check to only 1 time. Second time requires ₹800 payment.
-   * Rule 2: Consultant login allows max 2 reports for one client.
+   * Rule 2: Partner login allows max 2 reports for one client.
    * Rule 3: Admin access has unlimited report generations and score checks.
    */
   static verifyQuota(role: UserRole | string, clientId: string = 'cli-101', clientName: string = 'Client'): QuotaCheckResult {
@@ -122,9 +127,9 @@ export class ReportQuotaService {
       };
     }
 
-    // RULE 2: CONSULTANT LOGIN - 2 REPORTS ALLOWED FOR ONE CLIENT
-    if (activeRole === 'consultant') {
-      const clientReports = this.getConsultantReportCountForClient(clientId);
+    // RULE 2: PARTNER LOGIN - 2 REPORTS ALLOWED FOR ONE CLIENT
+    if (activeRole === 'partner' || (activeRole as string) === 'consultant') {
+      const clientReports = this.getPartnerReportCountForClient(clientId);
       const maxAllowed = 2;
 
       if (clientReports < maxAllowed) {
@@ -132,9 +137,9 @@ export class ReportQuotaService {
           allowed: true,
           currentCount: clientReports,
           maxAllowed,
-          role: 'consultant',
+          role: 'partner',
           clientName,
-          reason: `Consultant Tier: Report ${clientReports + 1} of ${maxAllowed} allowed for ${clientName}`
+          reason: `Partner Tier: Report ${clientReports + 1} of ${maxAllowed} allowed for ${clientName}`
         };
       }
 
@@ -144,9 +149,9 @@ export class ReportQuotaService {
         requiresPayment: false,
         currentCount: clientReports,
         maxAllowed,
-        role: 'consultant',
+        role: 'partner',
         clientName,
-        reason: `Consultant Quota Reached: Exactly 2 reports are allowed for one client (${clientName} has ${clientReports}/${maxAllowed} reports). Upgrade to Admin for unlimited reports or contact franchise coordinator.`
+        reason: `Partner Quota Reached: Exactly 2 reports are allowed for one client (${clientName} has ${clientReports}/${maxAllowed} reports). Upgrade to Admin for unlimited reports or contact franchise coordinator.`
       };
     }
 
@@ -178,11 +183,11 @@ export class ReportQuotaService {
       localStorage.setItem(STORAGE_KEYS.CLIENT_CHECK_COUNT, String(currentCount + 1));
     }
 
-    if (activeRole === 'consultant') {
-      const current = this.getConsultantReportCountForClient(clientId);
-      const map = this.getConsultantMap();
+    if (activeRole === 'partner' || (activeRole as string) === 'consultant') {
+      const current = this.getPartnerReportCountForClient(clientId);
+      const map = this.getPartnerMap();
       map[clientId] = current + 1;
-      localStorage.setItem(STORAGE_KEYS.CONSULTANT_CLIENT_REPORTS, JSON.stringify(map));
+      localStorage.setItem(STORAGE_KEYS.PARTNER_CLIENT_REPORTS, JSON.stringify(map));
     }
   }
 
@@ -194,13 +199,17 @@ export class ReportQuotaService {
     localStorage.setItem(STORAGE_KEYS.CLIENT_PAID_CREDITS, String(credits + 1));
   }
 
-  private static getConsultantMap(): Record<string, number> {
+  private static getPartnerMap(): Record<string, number> {
     try {
-      const stored = localStorage.getItem(STORAGE_KEYS.CONSULTANT_CLIENT_REPORTS);
+      const stored = localStorage.getItem(STORAGE_KEYS.PARTNER_CLIENT_REPORTS);
       return stored ? JSON.parse(stored) : {};
     } catch {
       return {};
     }
+  }
+
+  private static getConsultantMap(): Record<string, number> {
+    return this.getPartnerMap();
   }
 
   /**
@@ -209,7 +218,7 @@ export class ReportQuotaService {
   static resetQuotas(): void {
     localStorage.removeItem(STORAGE_KEYS.CLIENT_CHECK_COUNT);
     localStorage.removeItem(STORAGE_KEYS.CLIENT_PAID_CREDITS);
-    localStorage.removeItem(STORAGE_KEYS.CONSULTANT_CLIENT_REPORTS);
+    localStorage.removeItem(STORAGE_KEYS.PARTNER_CLIENT_REPORTS);
   }
 
   static resetDemo(): void {

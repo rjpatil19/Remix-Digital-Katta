@@ -12,6 +12,8 @@ interface HeaderProps {
   language: Language;
   onToggleLanguage?: () => void;
   onOpenLanguageSelector?: () => void;
+  subHeader?: React.ReactNode;
+  children?: React.ReactNode;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -23,6 +25,8 @@ export const Header: React.FC<HeaderProps> = ({
   language,
   onToggleLanguage,
   onOpenLanguageSelector,
+  subHeader,
+  children,
 }) => {
   const currentLangObj = SUPPORTED_LANGUAGES.find(l => l.code === language) || SUPPORTED_LANGUAGES[0];
 
@@ -113,6 +117,15 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
       )}
+
+      {/* SubHeader Slot (e.g., Persistent Customer Meta Pill) */}
+      {subHeader && (
+        <div className="px-3 sm:px-4 pb-2 pt-0">
+          {subHeader}
+        </div>
+      )}
+
+      {children}
     </div>
   );
 };

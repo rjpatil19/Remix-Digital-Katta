@@ -24,7 +24,7 @@ import {
   Printer
 } from 'lucide-react';
 import { CibilReportData, CreditAccount, Language, ExtractedReport } from '../../types';
-import { sample747ComprehensiveReport } from '../../data/sample747Report';
+import { generateComprehensiveAnalysis } from '../../utils/deepAnalysisEngine';
 import { ExportDocumentModal } from '../modals/ExportDocumentModal';
 import {
   calculateUtilizationMetrics,
@@ -826,15 +826,7 @@ export const ExtractedReportScreen: React.FC<ExtractedReportScreenProps> = ({
       <ExportDocumentModal
         isOpen={showExportModal}
         onClose={() => setShowExportModal(false)}
-        report={{
-          ...sample747ComprehensiveReport,
-          fullName: report.fullName,
-          panMasked: report.panMasked,
-          score: report.score,
-          mobile: report.mobile,
-          controlNumber: report.controlNumber,
-          accounts: report.accounts
-        }}
+        report={generateComprehensiveAnalysis(report)}
         currentLanguage={language}
         consultantName="Digital Katta Kendra #04 - Baner, Pune"
       />

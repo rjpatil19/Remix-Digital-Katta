@@ -50,9 +50,9 @@ export const SevenPointAuditSection: React.FC<SevenPointAuditSectionProps> = ({
   const totalCardLimit = cardAccounts.reduce(
     (sum, c) => sum + (c.creditLimit || c.sanctionedAmount || 0),
     0
-  ) || 69000;
-  const currentCardBalance = cardAccounts.reduce((sum, c) => sum + c.currentBalance, 0) || 49290;
-  const currentUtilizationPct = Math.min(100, Math.round((currentCardBalance / totalCardLimit) * 100));
+  );
+  const currentCardBalance = cardAccounts.reduce((sum, c) => sum + (c.currentBalance || 0), 0);
+  const currentUtilizationPct = totalCardLimit > 0 ? Math.min(100, Math.round((currentCardBalance / totalCardLimit) * 100)) : 0;
 
   const targetBalance = Math.round((totalCardLimit * paydownTarget) / 100);
   const requiredPaydown = Math.max(0, currentCardBalance - targetBalance);

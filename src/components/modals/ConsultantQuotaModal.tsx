@@ -11,7 +11,7 @@ interface ConsultantQuotaModalProps {
   language: Language;
 }
 
-export const ConsultantQuotaModal: React.FC<ConsultantQuotaModalProps> = ({
+export const PartnerQuotaModal: React.FC<ConsultantQuotaModalProps> = ({
   isOpen,
   onClose,
   onSwitchToAdmin,
@@ -32,7 +32,7 @@ export const ConsultantQuotaModal: React.FC<ConsultantQuotaModalProps> = ({
             </div>
             <div>
               <span className="text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full">
-                Rule 2: Consultant Limit
+                Rule 2: Partner Limit
               </span>
               <h3 className="text-sm font-black text-slate-900 mt-1">
                 {language === 'mr' ? 'ग्राहकासाठी २ अहवाल मर्यादा पूर्ण' : 'Client Limit: 2 Reports Max'}
@@ -59,8 +59,8 @@ export const ConsultantQuotaModal: React.FC<ConsultantQuotaModalProps> = ({
           </div>
           <p className="text-[11px] text-slate-600 leading-relaxed pt-1">
             {language === 'mr'
-              ? 'कन्सल्टंट प्लॅन अंतर्गत एका ग्राहकासाठी जास्तीत जास्त २ सिबिल अहवाल तयार करण्याची परवानगी आहे. पुढील अमर्याद अहवालांसाठी ॲडमिन (Admin) मोड वापरा.'
-              : 'Under Rule 2, consultants are permitted a maximum of 2 reports per client. Switch to Admin Access for unlimited generation across all franchise clients.'}
+              ? 'पार्टनर प्लॅन अंतर्गत एका ग्राहकासाठी जास्तीत जास्त २ सिबिल अहवाल तयार करण्याची परवानगी आहे. पुढील अमर्याद अहवालांसाठी ॲडमिन (Admin) मोड वापरा.'
+              : 'Under Rule 2, partners are permitted a maximum of 2 reports per client. Switch to Admin Access for unlimited generation across all franchise clients.'}
           </p>
         </div>
 
@@ -89,3 +89,6 @@ export const ConsultantQuotaModal: React.FC<ConsultantQuotaModalProps> = ({
     </div>
   );
 };
+
+export const ConsultantQuotaModal = PartnerQuotaModal;
+export type PartnerQuotaModalProps = ConsultantQuotaModalProps;

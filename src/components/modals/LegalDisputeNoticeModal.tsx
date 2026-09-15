@@ -13,13 +13,13 @@ import {
   Send,
   Sparkles
 } from 'lucide-react';
-import { Language, ConsultantClient } from '../../types';
+import { Language, PartnerClient } from '../../types';
 import { getLocalizedDisputeLetter, SUPPORTED_LANGUAGES } from '../../i18n';
 
 interface LegalDisputeNoticeModalProps {
   isOpen: boolean;
   onClose: () => void;
-  client: ConsultantClient;
+  client: PartnerClient;
   defaultLanguage: Language;
 }
 

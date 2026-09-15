@@ -2,7 +2,7 @@ import { ExtractedReport, Language, CreditAccount, DetectedIssue, ActionPlanItem
 import { getLanguageDetails, SUPPORTED_LANGUAGES } from '../i18n';
 import { getLocalizedDisputeLetter, getScoreCategoryText, getSeverityText, getLoanDecisionText } from '../i18n';
 
-export type ExportDocumentType = 'FULL_AUDIT_REPORT' | 'LEGAL_DISPUTE_NOTICE' | 'LOAN_ELIGIBILITY_SUMMARY';
+export type ExportDocumentType = 'PROFESSIONAL_ANALYSIS_PDF' | 'FULL_AUDIT_REPORT' | 'LEGAL_DISPUTE_NOTICE' | 'LOAN_ELIGIBILITY_SUMMARY';
 
 export interface DocumentExportOptions {
   language: Language;
@@ -153,7 +153,7 @@ const DOCUMENT_LOCALES: Record<Language, DocumentLocale> = {
     thCompensating: 'पडताळणी अनुकूल बाबी',
     verdictTitle: 'संस्थात्मक कर्ज मंजुरी निष्कर्ष: शिफारस पात्र (APPROVED)',
     verdictText: 'ग्राहकाचा सिबिल इतिहास सुरक्षित कर्जे व व्यवसाय कर्जासाठी अत्यंत अनुकूल आहे.',
-    consultantNotesLabel: 'डिजिटल कट्टा केंद्र सल्लागार नोंद:',
+    consultantNotesLabel: 'डिजिटल कट्टा केंद्र पार्टनर नोंद:',
     statutoryFooter1: 'डिजिटल कट्टा फिनटेक ब्युरो इंटेलिजन्स • अधिकृत सिबिल अहवाल विश्लेषण इंजिन',
     statutoryFooter2: 'क्रेडिट इन्फॉर्मेशन कंपनीज रेग्युलेशन ॲक्ट (CICRA 2005) कलम २१(३) अन्वये ३० दिवसांच्या आत त्रुटी दुरुस्ती करणे बँकांना बंधनकारक आहे.',
     disputeHeading: 'CICRA 2005 कलम २१ अधिकृत कायदेशीर निवारण नोटीस'
@@ -224,7 +224,7 @@ const DOCUMENT_LOCALES: Record<Language, DocumentLocale> = {
     thCompensating: 'Compensating Factors',
     verdictTitle: 'INSTITUTIONAL UNDERWRITING VERDICT: APPROVED',
     verdictText: 'Applicant demonstrates strong creditworthiness for secured loans and qualified term facilities.',
-    consultantNotesLabel: 'Digital Katta Kendra Consultant Notes:',
+    consultantNotesLabel: 'Digital Katta Kendra Partner Notes:',
     statutoryFooter1: 'Digital Katta Fintech Bureau Intelligence • Institutional CIR Analysis Engine',
     statutoryFooter2: 'Governed under Section 21(3) of CICRA 2005 (Statutory 30-day resolution mandate for credit institutions).',
     disputeHeading: 'CICRA 2005 Section 21 Statutory Dispute Notice'
@@ -295,7 +295,7 @@ const DOCUMENT_LOCALES: Record<Language, DocumentLocale> = {
     thCompensating: 'सकारात्मक सहायक कारक',
     verdictTitle: 'संस्थागत ऋण स्वीकृति निष्कर्ष: अनुशंसित (APPROVED)',
     verdictText: 'ग्राहक का क्रेडिट रिकॉर्ड सुरक्षित ऋण एवं व्यावसायिक ऋण हेतु अत्यंत उपयुक्त है।',
-    consultantNotesLabel: 'डिजिटल कट्टा केंद्र सलाहकार टिप्पणी:',
+    consultantNotesLabel: 'डिजिटल कट्टा केंद्र पार्टनर टिप्पणी:',
     statutoryFooter1: 'डिजिटल कट्टा फिनटेक ब्यूरो इंटेलिजेंस • संस्थागत सिबिल रिपोर्ट विश्लेषण इंजन',
     statutoryFooter2: 'क्रेडिट इंफॉर्मेशन कंपनीज रेगुलेशन एक्ट (CICRA 2005) की धारा 21(3) के अंतर्गत ३० दिनों के भीतर निवारण अनिवार्य है।',
     disputeHeading: 'CICRA 2005 धारा 21 वैधानिक विवाद निवारण नोटिस'

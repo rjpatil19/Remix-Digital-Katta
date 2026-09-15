@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { SplashScreen } from './components/screens/SplashScreen';
-import { OnboardingScreen } from './components/screens/OnboardingScreen';
 import { LoginSignupScreen } from './components/screens/LoginSignupScreen';
 import { HomeDashboardScreen } from './components/screens/HomeDashboardScreen';
 import { CreditScoreScreen } from './components/screens/CreditScoreScreen';
@@ -11,7 +10,7 @@ import { MyProfileScreen } from './components/screens/MyProfileScreen';
 import { ReportDownloadSuccessScreen } from './components/screens/ReportDownloadSuccessScreen';
 import { ReportAnalysisScreen } from './components/screens/ReportAnalysisScreen';
 import { FullCreditAnalysisScreen } from './components/screens/FullCreditAnalysisScreen';
-import { ConsultantHubScreen } from './components/screens/ConsultantHubScreen';
+import { ConsultantHubScreen, PartnerHubScreen } from './components/screens/ConsultantHubScreen';
 import { EmiCalculatorScreen } from './components/screens/EmiCalculatorScreen';
 import { UploadReportScreen } from './components/screens/UploadReportScreen';
 import { ExtractedReportScreen } from './components/screens/ExtractedReportScreen';
@@ -20,9 +19,11 @@ import { ArchitectureModal } from './components/common/ArchitectureModal';
 import { DigitalKattaLogo } from './components/common/DigitalKattaLogo';
 import { BankNodalReconciliationModal } from './components/modals/BankNodalReconciliationModal';
 import { LanguageSelectorModal } from './components/common/LanguageSelectorModal';
-import { Language, ScreenId, CibilReportData, UserRole } from './types';
-import { defaultCibilReport } from './data/mockData';
+import { CheckCreditScoreFlowModal } from './components/modals/CheckCreditScoreFlowModal';
+import { Language, ScreenId, CibilReportData, UserRole, UserProfile } from './types';
+import { defaultCibilReport, currentUser } from './data/mockData';
 import { sample747ComprehensiveReport } from './data/sample747Report';
+import { getClientReport } from './utils/clientReportService';
 import { getLanguageDetails } from './i18n';
 import { Globe, Layers, Smartphone, Sparkles, Upload, UserCog, Building2, ChevronDown } from 'lucide-react';
 
@@ -39,12 +40,14 @@ export default function App() {
     }
     return 'mr'; // Default to Marathi per specification
   });
-  const [userRole, setUserRole] = useState<UserRole>('consultant');
+  const [userRole, setUserRole] = useState<UserRole>('client');
+  const [loggedInUser, setLoggedInUser] = useState<UserProfile>(currentUser);
+  const [showScoreModal, setShowScoreModal] = useState<boolean>(false);
   const [showArchModal, setShowArchModal] = useState<boolean>(false);
   const [showNodalHub, setShowNodalHub] = useState<boolean>(false);
   const [showLangModal, setShowLangModal] = useState<boolean>(false);
   const [history, setHistory] = useState<ScreenId[]>(['splash']);
-  const [currentReport, setCurrentReport] = useState<any>(sample747ComprehensiveReport);
+  const [currentReport, setCurrentReport] = useState<any>(defaultCibilReport);
 
   const currentLangDetails = getLanguageDetails(language);
 
@@ -117,7 +120,7 @@ export default function App() {
               <UserCog className="w-3 h-3 text-orange-400" />
               Role:
             </span>
-            {(['client', 'consultant', 'admin'] as const).map(role => (
+            {(['client', 'partner', 'admin'] as const).map(role => (
               <button
                 key={role}
                 onClick={() => setUserRole(role)}
@@ -173,26 +176,25 @@ export default function App() {
         <span className="text-slate-500 shrink-0 mr-1 font-bold">Quick Switch:</span>
         {[
           { id: 'splash', label: '1. Splash' },
-          { id: 'onboarding', label: '2. Onboarding' },
-          { id: 'login', label: '3. Login' },
-          { id: 'home', label: '4. Home' },
+          { id: 'login', label: '2. Login / Sign-up' },
+          { id: 'home', label: '3. Home' },
           { id: 'upload_report', label: '★ Upload CIBIL Report' },
           { id: 'extracted_report', label: '★ Parsed Summary' },
           { id: 'report_analysis', label: '★ 7-Point Analysis' },
-          { id: 'consultant_hub', label: '★ Franchise Kendra' },
-          { id: 'credit_score', label: '5. Credit Score' },
-          { id: 'loan_eligibility', label: '6. Loans' },
-          { id: 'government_schemes', label: '7. Govt Schemes' },
-          { id: 'learn_grow', label: '8. Learn' },
-          { id: 'profile', label: '9. Profile' },
-          { id: 'report_success', label: '10. Download Success' },
+          { id: 'partner_hub', label: '★ Partner Kendra' },
+          { id: 'credit_score', label: '4. Credit Score' },
+          { id: 'loan_eligibility', label: '5. Loans' },
+          { id: 'government_schemes', label: '6. Govt Schemes' },
+          { id: 'learn_grow', label: '7. Learn' },
+          { id: 'profile', label: '8. Profile' },
+          { id: 'report_success', label: '9. Download Success' },
           { id: 'emi_calculator', label: '★ EMI Calc' }
         ].map((item) => (
           <button
             key={item.id}
             onClick={() => navigateTo(item.id as ScreenId)}
             className={`px-2.5 py-1 rounded-lg transition-colors shrink-0 ${
-              currentScreen === item.id
+              currentScreen === item.id || (item.id === 'partner_hub' && currentScreen === 'consultant_hub')
                 ? 'bg-[#FF6B00] text-white font-bold'
                 : 'bg-slate-800/80 hover:bg-slate-800 text-slate-300'
             }`}
@@ -207,15 +209,7 @@ export default function App() {
         {/* Dynamic Screen Renderer */}
         <div className="flex-1 w-full h-full overflow-hidden flex flex-col relative">
           {currentScreen === 'splash' && (
-            <SplashScreen onContinue={() => navigateTo('onboarding')} />
-          )}
-
-          {currentScreen === 'onboarding' && (
-            <OnboardingScreen
-              onNext={() => navigateTo('login')}
-              onSkip={() => navigateTo('home')}
-              language={language}
-            />
+            <SplashScreen onContinue={() => navigateTo('login')} />
           )}
 
           {currentScreen === 'login' && (
@@ -230,6 +224,8 @@ export default function App() {
               onNavigate={navigateTo}
               language={language}
               onOpenNotifications={() => navigateTo('profile')}
+              onStartCreditScoreFlow={() => setShowScoreModal(true)}
+              loggedInUserName={loggedInUser.name}
             />
           )}
 
@@ -309,6 +305,7 @@ export default function App() {
 
           {currentScreen === 'report_analysis' && (
             <FullCreditAnalysisScreen
+              key={currentReport?.reportId || currentReport?.controlNumber || currentReport?.fullName || 'report-view'}
               onBack={handleBack}
               language={language}
               onToggleLanguage={toggleLanguage}
@@ -318,8 +315,8 @@ export default function App() {
             />
           )}
 
-          {currentScreen === 'consultant_hub' && (
-            <ConsultantHubScreen
+          {(currentScreen === 'partner_hub' || currentScreen === 'consultant_hub') && (
+            <PartnerHubScreen
               onBack={handleBack}
               language={language}
               onToggleLanguage={toggleLanguage}
@@ -327,9 +324,8 @@ export default function App() {
               userRole={userRole}
               onSwitchRole={(newRole) => setUserRole(newRole)}
               onSelectClientReport={(client) => {
-                if (client.id === 'cli-747' || client.name.toLowerCase().includes('rajwardhan')) {
-                  setCurrentReport(sample747ComprehensiveReport);
-                }
+                const clientReport = getClientReport(client);
+                setCurrentReport(clientReport);
                 navigateTo('report_analysis');
               }}
             />
@@ -353,6 +349,19 @@ export default function App() {
           />
         )}
       </main>
+
+      {/* Dynamic Instant Credit Score Check Flow Modal */}
+      <CheckCreditScoreFlowModal
+        isOpen={showScoreModal}
+        onClose={() => setShowScoreModal(false)}
+        language={language}
+        loggedInUser={loggedInUser}
+        onAnalysisComplete={(freshReport) => {
+          setCurrentReport(freshReport);
+          setShowScoreModal(false);
+          navigateTo('report_analysis');
+        }}
+      />
 
       {/* Architecture & Engineering Spec Modal */}
       <ArchitectureModal

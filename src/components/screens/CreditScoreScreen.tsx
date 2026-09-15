@@ -22,7 +22,7 @@ import { defaultCibilReport } from '../../data/mockData';
 import { Language, ScoreFactor, ScreenId, UserRole } from '../../types';
 import { ReportQuotaService, QuotaCheckResult } from '../../services/reportQuotaService';
 import { PaymentModal } from '../modals/PaymentModal';
-import { ConsultantQuotaModal } from '../modals/ConsultantQuotaModal';
+import { PartnerQuotaModal } from '../modals/PartnerQuotaModal';
 
 interface CreditScoreScreenProps {
   onBack: () => void;
@@ -45,7 +45,7 @@ export const CreditScoreScreen: React.FC<CreditScoreScreenProps> = ({
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedFactor, setSelectedFactor] = useState<ScoreFactor | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [showConsultantQuotaModal, setShowConsultantQuotaModal] = useState(false);
+  const [showPartnerQuotaModal, setShowPartnerQuotaModal] = useState(false);
   const [quotaKey, setQuotaKey] = useState(0);
 
   const quotaVerification: QuotaCheckResult = ReportQuotaService.verifyQuota(
@@ -77,9 +77,9 @@ export const CreditScoreScreen: React.FC<CreditScoreScreenProps> = ({
         setShowPaymentModal(true);
         return;
       }
-      if (userRole === 'consultant') {
-        // Rule 2: Consultant 2 reports allowed for one client limit reached
-        setShowConsultantQuotaModal(true);
+      if (userRole === 'partner') {
+        // Rule 2: Partner 2 reports allowed for one client limit reached
+        setShowPartnerQuotaModal(true);
         return;
       }
     }
@@ -435,14 +435,14 @@ export const CreditScoreScreen: React.FC<CreditScoreScreenProps> = ({
         onPaymentSuccess={handlePaymentSuccess}
       />
 
-      {/* Consultant Quota Modal for Rule 2 (Max 2 reports per client) */}
-      <ConsultantQuotaModal
-        isOpen={showConsultantQuotaModal}
-        onClose={() => setShowConsultantQuotaModal(false)}
+      {/* Partner Quota Modal for Rule 2 (Max 2 reports per client) */}
+      <PartnerQuotaModal
+        isOpen={showPartnerQuotaModal}
+        onClose={() => setShowPartnerQuotaModal(false)}
         clientName="Rahul Deshmukh"
-        reportsCount={quotaVerification.currentCount}
+        reportCount={quotaVerification.currentCount}
         language={language}
-        onSwitchToAdmin={onSwitchToAdmin}
+        onSwitchToAdmin={onSwitchToAdmin || (() => {})}
       />
     </div>
   );

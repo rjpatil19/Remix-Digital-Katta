@@ -29,6 +29,7 @@ export interface TranslationDictionary {
 
   // Roles
   roleClient: string;
+  rolePartner: string;
   roleConsultant: string;
   roleAdmin: string;
 
@@ -214,7 +215,8 @@ export const translations: Record<Language, TranslationDictionary> = {
     loading: 'लोड होत आहे...',
 
     roleClient: 'ग्राहक (Client)',
-    roleConsultant: 'सल्लागार (Consultant)',
+    rolePartner: 'पार्टनर (Partner)',
+    roleConsultant: 'पार्टनर (Partner)',
     roleAdmin: 'प्रशासक (Admin)',
 
     navHome: 'मुख्य',
@@ -387,7 +389,8 @@ export const translations: Record<Language, TranslationDictionary> = {
     loading: 'Loading...',
 
     roleClient: 'Client',
-    roleConsultant: 'Consultant',
+    rolePartner: 'Partner',
+    roleConsultant: 'Partner',
     roleAdmin: 'Admin',
 
     navHome: 'Home',
@@ -560,7 +563,8 @@ export const translations: Record<Language, TranslationDictionary> = {
     loading: 'लोड हो रहा है...',
 
     roleClient: 'ग्राहक (Client)',
-    roleConsultant: 'सलाहकार (Consultant)',
+    rolePartner: 'पार्टनर (Partner)',
+    roleConsultant: 'पार्टनर (Partner)',
     roleAdmin: 'प्रशासक (Admin)',
 
     navHome: 'होम',
@@ -733,7 +737,8 @@ export const translations: Record<Language, TranslationDictionary> = {
     loading: 'લોડ થઈ રહ્યું છે...',
 
     roleClient: 'ગ્રાહક (Client)',
-    roleConsultant: 'સલાહકાર (Consultant)',
+    rolePartner: 'પાર્ટનર (Partner)',
+    roleConsultant: 'પાર્ટનર (Partner)',
     roleAdmin: 'સંચાલક (Admin)',
 
     navHome: 'હોમ',
@@ -906,7 +911,8 @@ export const translations: Record<Language, TranslationDictionary> = {
     loading: 'লোড হচ্ছে...',
 
     roleClient: 'গ্রাহক (Client)',
-    roleConsultant: 'পরামর্শদাতা (Consultant)',
+    rolePartner: 'পার্টনার (Partner)',
+    roleConsultant: 'পার্টনার (Partner)',
     roleAdmin: 'প্রশাসক (Admin)',
 
     navHome: 'হোম',
@@ -1079,7 +1085,8 @@ export const translations: Record<Language, TranslationDictionary> = {
     loading: 'ஏற்றுகிறது...',
 
     roleClient: 'வாடிக்கையாளர் (Client)',
-    roleConsultant: 'ஆலோசகர் (Consultant)',
+    rolePartner: 'பார்ட்னர் (Partner)',
+    roleConsultant: 'பார்ட்னர் (Partner)',
     roleAdmin: 'நிர்வாகி (Admin)',
 
     navHome: 'முகப்பு',
@@ -1252,7 +1259,8 @@ export const translations: Record<Language, TranslationDictionary> = {
     loading: 'లోడ్ అవుతోంది...',
 
     roleClient: 'కస్టమర్ (Client)',
-    roleConsultant: 'సలహాదారు (Consultant)',
+    rolePartner: 'పార్ట్నర్ (Partner)',
+    roleConsultant: 'పార్ట్నర్ (Partner)',
     roleAdmin: 'అడ్మిన్ (Admin)',
 
     navHome: 'హోమ్',
@@ -1425,7 +1433,8 @@ export const translations: Record<Language, TranslationDictionary> = {
     loading: 'ലോഡ് ചെയ്യുന്നു...',
 
     roleClient: 'ഉപഭോക്താവ് (Client)',
-    roleConsultant: 'ഉപദേശകൻ (Consultant)',
+    rolePartner: 'പങ്കാളി (Partner)',
+    roleConsultant: 'പങ്കാളി (Partner)',
     roleAdmin: 'അഡ്മിൻ (Admin)',
 
     navHome: 'ഹോം',
@@ -1598,7 +1607,8 @@ export const translations: Record<Language, TranslationDictionary> = {
     loading: 'ଲୋଡ୍ ହେଉଛି...',
 
     roleClient: 'ଗ୍ରାହକ (Client)',
-    roleConsultant: 'ପରାମର୍ଶଦାତା (Consultant)',
+    rolePartner: 'ପାର୍ଟନର (Partner)',
+    roleConsultant: 'ପାର୍ଟନର (Partner)',
     roleAdmin: 'ପ୍ରଶାସକ (Admin)',
 
     navHome: 'ହୋମ୍',

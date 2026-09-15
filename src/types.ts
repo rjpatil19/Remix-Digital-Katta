@@ -1,6 +1,5 @@
 export type ScreenId =
   | 'splash'
-  | 'onboarding'
   | 'login'
   | 'home'
   | 'credit_score'
@@ -11,7 +10,8 @@ export type ScreenId =
   | 'report_success'
   | 'report_analysis'
   | 'full_credit_analysis'
-  | 'consultant_hub'
+  | 'partner_hub'
+  | 'consultant_hub' // kept as backward-compatible alias
   | 'emi_calculator'
   | 'upload_report'
   | 'extracted_report'
@@ -29,7 +29,8 @@ export interface LanguageOption {
   samplePhrase: string;
 }
 
-export type UserRole = 'client' | 'consultant' | 'admin';
+export type UserRole = 'client' | 'partner' | 'admin';
+export type LegacyUserRole = 'client' | 'consultant' | 'partner' | 'admin';
 
 export type CreditBureau = 'CIBIL' | 'Experian' | 'Equifax' | 'CRIF High Mark';
 
@@ -188,7 +189,7 @@ export interface DisputeCase {
 
 export type Dispute = DisputeCase;
 
-export interface ConsultantClient {
+export interface PartnerClient {
   id: string;
   name: string;
   phone: string;
@@ -196,7 +197,8 @@ export interface ConsultantClient {
   city: string;
   pan: string;
   address?: string;
-  assignedConsultant: string;
+  assignedPartner?: string;
+  assignedConsultant?: string; // backward-compatibility
   currentScore: number;
   targetScore: number;
   activeDisputesCount: number;
@@ -209,7 +211,8 @@ export interface ConsultantClient {
   uploadedReports: UploadedReportItem[];
 }
 
-export type Client = ConsultantClient;
+export type ConsultantClient = PartnerClient;
+export type Client = PartnerClient;
 
 export interface DetectedIssue {
   id: string;
@@ -260,12 +263,19 @@ export interface CirAuditPillar {
   pillarNumber: number;
   titleEn: string;
   titleMr: string;
+  title?: string;
   weight: number; // percentage weight, e.g. 35 for 35%
   score: number; // score out of 100, e.g. 94
   status: 'EXCELLENT' | 'GOOD' | 'ATTENTION' | 'CRITICAL';
   statusMr: string;
   summaryEn: string;
   summaryMr: string;
+  summary?: string;
+  keyFinding?: string;
+  keyFindingMr?: string;
+  details?: string;
+  recommendation?: string;
+  recommendationMr?: string;
   keyMetricLabel: string;
   keyMetricValue: string;
   benchmarkRule: string;
@@ -319,7 +329,7 @@ export interface RegisteredAddress {
   category: string; // e.g. "Permanent Address", "Residence Address", "Office Address"
   categoryMr: string;
   fullAddress: string;
-  residenceCode: 'Owned' | 'Academic' | 'Professional' | 'Rented';
+  residenceCode: 'Owned' | 'Academic' | 'Professional' | 'Rented' | 'Current';
   residenceCodeMr: string;
   dateReported: string;
 }
@@ -355,6 +365,10 @@ export interface CreditPortfolioMetrics {
   oldestAccountDate: string; // e.g. "October 6, 2012"
   mostRecentReportDate: string;
   overdueStatus: string;
+  securedRatio?: number;
+  totalOverdue?: number;
+  overdueAccountsCount?: number;
+  creditCardUtilization?: number;
 }
 
 export interface ExecutiveSummaryData {
@@ -381,6 +395,26 @@ export interface ExtractedReport extends CibilReportData {
   loanRecommendations?: LoanRecommendation[];
   executiveSummary?: ExecutiveSummaryData;
   consultantNotes?: string;
+  partnerNotes?: string;
+}
+
+export interface CommercialRankData {
+  companyName: string;
+  panGst: string;
+  entityType: 'Private Limited' | 'Proprietorship' | 'Partnership' | 'LLP' | 'Public Limited';
+  cmrRank: number; // 1 to 10 (CMR-1 is Super Prime, CMR-10 is highest risk)
+  cmrDescription: string;
+  cmrDescriptionMr: string;
+  riskCategory: 'Very Low Risk' | 'Low Risk' | 'Medium Risk' | 'High Risk';
+  riskCategoryMr: string;
+  totalCreditFacilities: number;
+  sanctionedAmount: number;
+  currentOutstanding: number;
+  overdueAmount: number;
+  workingCapitalHealth: 'Optimal' | 'Average' | 'Stressed';
+  eligibilityForCommercialLoans: 'High' | 'Moderate' | 'Low';
+  bureauControlNumber: string;
+  reportDate: string;
 }
 
 

@@ -35,6 +35,8 @@ import {
 import { Header } from '../common/Header';
 import { DigitalKattaLogo } from '../common/DigitalKattaLogo';
 import { consultantClientsData, mockDisputeCases, defaultCibilReport, detectedIssuesList } from '../../data/mockData';
+import { getClientReport } from '../../utils/clientReportService';
+import { generateComprehensiveAnalysis } from '../../utils/deepAnalysisEngine';
 import {
   Language,
   ConsultantClient,
@@ -49,10 +51,10 @@ import { sample747ComprehensiveReport } from '../../data/sample747Report';
 import { FintechApiService } from '../../services/api';
 import { exportClientCibilPdf } from '../../utils/cibilEngine';
 import { ReportQuotaService } from '../../services/reportQuotaService';
-import { ConsultantQuotaModal } from '../modals/ConsultantQuotaModal';
+import { PartnerQuotaModal } from '../modals/ConsultantQuotaModal';
 import { ExportDocumentModal } from '../modals/ExportDocumentModal';
 
-interface ConsultantHubScreenProps {
+export interface PartnerHubScreenProps {
   onBack: () => void;
   language: Language;
   onToggleLanguage: () => void;
@@ -62,12 +64,14 @@ interface ConsultantHubScreenProps {
   onSelectClientReport?: (client: ConsultantClient) => void;
 }
 
-export const ConsultantHubScreen: React.FC<ConsultantHubScreenProps> = ({
+export type ConsultantHubScreenProps = PartnerHubScreenProps;
+
+export const PartnerHubScreen: React.FC<PartnerHubScreenProps> = ({
   onBack,
   language,
   onToggleLanguage,
   onNavigate,
-  userRole = 'consultant',
+  userRole = 'partner',
   onSwitchRole,
   onSelectClientReport
 }) => {
@@ -198,14 +202,9 @@ export const ConsultantHubScreen: React.FC<ConsultantHubScreenProps> = ({
   };
 
   const handleExportClientPdf = (client: ConsultantClient) => {
-    const reportForExport: ExtractedReport = {
-      ...sample747ComprehensiveReport,
-      fullName: client.name,
-      panMasked: client.pan,
-      score: client.currentScore,
-      mobile: client.phone,
-      consultantNotes: `Digital Katta Kendra #04 advisory for ${client.name}. Current score ${client.currentScore}. Recommended remediation prioritizes fast score elevation for institutional credit approval.`
-    };
+    const clientReport = getClientReport(client);
+    const reportForExport = generateComprehensiveAnalysis(clientReport);
+    reportForExport.consultantNotes = `Digital Katta Partner Kendra #04 advisory for ${client.name}. Current score ${client.currentScore}. Recommended remediation prioritizes fast score elevation for institutional credit approval.`;
     setExportModalClient(reportForExport);
   };
 
@@ -217,7 +216,7 @@ export const ConsultantHubScreen: React.FC<ConsultantHubScreenProps> = ({
 
   const handleGenerateReportForClient = (client: ConsultantClient) => {
     const check = ReportQuotaService.verifyQuota(userRole, client.id, client.name);
-    if (!check.allowed && userRole === 'consultant') {
+    if (!check.allowed && (userRole === 'partner' || (userRole as string) === 'consultant')) {
       setShowQuotaModal(true);
       return;
     }
@@ -236,7 +235,7 @@ export const ConsultantHubScreen: React.FC<ConsultantHubScreenProps> = ({
     <div className="flex flex-col w-full h-full bg-slate-50 overflow-y-auto select-none pb-14">
       {/* Header */}
       <Header
-        title={language === 'mr' ? 'डिजिटल कट्टा केंद्र (Franchise)' : 'Consultant / Franchise Hub'}
+        title={language === 'mr' ? 'डिजिटल कट्टा पार्टनर केंद्र' : 'Partner / Franchise Hub'}
         showBack={true}
         onBack={onBack}
         language={language}
@@ -254,7 +253,7 @@ export const ConsultantHubScreen: React.FC<ConsultantHubScreenProps> = ({
               <div>
                 <div className="flex items-center gap-2">
                   <span className="text-[10px] uppercase font-black px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-400 border border-orange-400/30">
-                    Kendra #04 • Baner, Pune
+                    Partner Kendra #04 • Baner, Pune
                   </span>
                   <span className="text-[10px] text-emerald-400 font-bold flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
@@ -269,7 +268,7 @@ export const ConsultantHubScreen: React.FC<ConsultantHubScreenProps> = ({
             {/* Role Switcher in Top Bar */}
             {onSwitchRole && (
               <div className="flex items-center bg-white/10 rounded-xl p-0.5 border border-white/15">
-                {(['client', 'consultant', 'admin'] as const).map(role => (
+                {(['client', 'partner', 'admin'] as const).map(role => (
                   <button
                     key={role}
                     onClick={() => onSwitchRole(role)}
@@ -500,20 +499,20 @@ export const ConsultantHubScreen: React.FC<ConsultantHubScreenProps> = ({
                 <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
                   userRole === 'admin'
                     ? 'bg-emerald-100 text-emerald-800'
-                    : (ReportQuotaService.verifyQuota('consultant', selectedClient.id, selectedClient.name).allowed
+                    : (ReportQuotaService.verifyQuota('partner', selectedClient.id, selectedClient.name).allowed
                         ? 'bg-blue-100 text-blue-800'
                         : 'bg-rose-100 text-rose-800 border border-rose-200')
                 }`}>
                   {userRole === 'admin'
                     ? 'Admin: Unlimited Reports'
-                    : `${ReportQuotaService.verifyQuota('consultant', selectedClient.id, selectedClient.name).currentCount} / 2 Reports Used`}
+                    : `${ReportQuotaService.verifyQuota('partner', selectedClient.id, selectedClient.name).currentCount} / 2 Reports Used`}
                 </span>
               </div>
 
               <p className="text-[11px] text-slate-500">
                 {userRole === 'admin'
                   ? 'Rule 3: Admin privilege allows unlimited credit reports generation for any client.'
-                  : 'Rule 2: Franchise consultant limit allows exactly 2 bureau reports per client.'}
+                  : 'Rule 2: Franchise partner limit allows exactly 2 bureau reports per client.'}
               </p>
 
               <div className="flex items-center gap-2 pt-1">
@@ -608,7 +607,7 @@ export const ConsultantHubScreen: React.FC<ConsultantHubScreenProps> = ({
             <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs space-y-3">
               <h4 className="text-xs font-black text-slate-900 flex items-center gap-1.5">
                 <MessageSquare className="w-4 h-4 text-blue-600" />
-                <span>Consultant Case Notes & Timeline</span>
+                <span>Partner Case Notes & Timeline</span>
               </h4>
 
               <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
@@ -876,12 +875,12 @@ export const ConsultantHubScreen: React.FC<ConsultantHubScreenProps> = ({
           </div>
         </div>
       )}
-      {/* Consultant Quota Modal for Rule 2 */}
-      <ConsultantQuotaModal
+      {/* Partner Quota Modal for Rule 2 */}
+      <PartnerQuotaModal
         isOpen={showQuotaModal}
         onClose={() => setShowQuotaModal(false)}
         clientName={selectedClient.name}
-        reportsCount={ReportQuotaService.verifyQuota('consultant', selectedClient.id, selectedClient.name).currentCount}
+        reportCount={ReportQuotaService.verifyQuota('partner', selectedClient.id, selectedClient.name).currentCount}
         language={language}
         onSwitchToAdmin={() => onSwitchRole?.('admin')}
       />
@@ -899,3 +898,5 @@ export const ConsultantHubScreen: React.FC<ConsultantHubScreenProps> = ({
     </div>
   );
 };
+
+export const ConsultantHubScreen = PartnerHubScreen;

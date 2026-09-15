@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Bell,
   Gauge,
@@ -16,22 +16,31 @@ import {
   Battery,
   Upload,
   FileUp,
-  ShieldCheck
+  ShieldCheck,
+  Building2
 } from 'lucide-react';
 import { Language, ScreenId } from '../../types';
 import { DigitalKattaLogo } from '../common/DigitalKattaLogo';
+import { CommercialRankModal } from '../modals/CommercialRankModal';
 
 interface HomeDashboardScreenProps {
   onNavigate: (screen: ScreenId) => void;
   language: Language;
   onOpenNotifications: () => void;
+  onStartCreditScoreFlow?: () => void;
+  loggedInUserName?: string;
 }
 
 export const HomeDashboardScreen: React.FC<HomeDashboardScreenProps> = ({
   onNavigate,
   language,
-  onOpenNotifications
+  onOpenNotifications,
+  onStartCreditScoreFlow,
+  loggedInUserName
 }) => {
+  const [showCmrModal, setShowCmrModal] = useState(false);
+  const displayName = loggedInUserName || 'Rahul Deshmukh';
+
   return (
     <div className="flex flex-col w-full h-full bg-[#F8FAFC] overflow-y-auto select-none pb-4">
       {/* Top Phone Status Bar */}
@@ -59,7 +68,7 @@ export const HomeDashboardScreen: React.FC<HomeDashboardScreenProps> = ({
 
           <div>
             <h2 className="text-sm font-extrabold text-[#0B214D] leading-tight">
-              {language === 'mr' ? 'नमस्ते, राहुल!' : 'Hello, Rahul!'}
+              {language === 'mr' ? `नमस्ते, ${displayName.split(' ')[0]}!` : `Hello, ${displayName.split(' ')[0]}!`}
             </h2>
             <p className="text-[11px] text-slate-500 font-medium">
               {language === 'mr' ? 'लहान पावले. मोठी स्वप्ने.' : 'Small steps. Bigger dreams.'}
@@ -95,7 +104,7 @@ export const HomeDashboardScreen: React.FC<HomeDashboardScreenProps> = ({
               ठिकाण एक, सुविधा अनेक..!
             </p>
             <button
-              onClick={() => onNavigate('credit_score')}
+              onClick={() => (onStartCreditScoreFlow ? onStartCreditScoreFlow() : onNavigate('credit_score'))}
               className="mt-3 px-3 py-1.5 rounded-lg bg-[#0B2553] text-white text-[11px] font-bold shadow-xs hover:bg-[#081836] transition-colors flex items-center gap-1"
             >
               <span>{language === 'mr' ? 'सिबिल तपासा' : 'Check CIBIL 742'}</span>
@@ -161,7 +170,7 @@ export const HomeDashboardScreen: React.FC<HomeDashboardScreenProps> = ({
             {/* 1. Check Credit Score */}
             <button
               id="action-check-score"
-              onClick={() => onNavigate('credit_score')}
+              onClick={() => (onStartCreditScoreFlow ? onStartCreditScoreFlow() : onNavigate('credit_score'))}
               className="bg-white rounded-2xl p-3.5 flex flex-col items-center text-center shadow-2xs border border-slate-100 hover:border-orange-200 active:scale-95 transition-all group"
             >
               <div className="w-12 h-12 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center group-hover:bg-sky-100 transition-colors">
@@ -172,17 +181,17 @@ export const HomeDashboardScreen: React.FC<HomeDashboardScreenProps> = ({
               </span>
             </button>
 
-            {/* 2. Apply for Loan */}
+            {/* 2. Check Commercial Rank (CMR) */}
             <button
-              id="action-apply-loan"
-              onClick={() => onNavigate('loan_eligibility')}
+              id="action-check-cmr"
+              onClick={() => setShowCmrModal(true)}
               className="bg-white rounded-2xl p-3.5 flex flex-col items-center text-center shadow-2xs border border-slate-100 hover:border-orange-200 active:scale-95 transition-all group"
             >
-              <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:bg-emerald-100 transition-colors">
-                <CircleDollarSign className="w-6 h-6 stroke-[2.2]" />
+              <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                <Building2 className="w-6 h-6 stroke-[2.2]" />
               </div>
               <span className="text-xs font-bold text-[#0B214D] mt-2 leading-tight">
-                {language === 'mr' ? 'कर्जासाठी अर्ज करा' : 'Apply for Loan'}
+                {language === 'mr' ? 'कमर्शियल रँक (CMR)' : 'Check Commercial Rank (CMR)'}
               </span>
             </button>
 
@@ -322,25 +331,32 @@ export const HomeDashboardScreen: React.FC<HomeDashboardScreenProps> = ({
           </button>
         </div>
 
-        {/* Franchise / Consultant Mode Access */}
+        {/* Franchise / Partner Portal Access */}
         <div className="bg-slate-100 rounded-2xl p-3 border border-slate-200 flex items-center justify-between">
           <div>
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-              Franchise Portal
+              Partner Portal
             </span>
             <p className="text-xs font-bold text-slate-800">
-              {language === 'mr' ? 'कट्टा केंद्र / फ्रँचायझी डॅशबोर्ड' : 'Katta Kendra / Consultant Hub'}
+              {language === 'mr' ? 'कट्टा केंद्र / पार्टनर डॅशबोर्ड' : 'Katta Kendra / Partner Hub'}
             </p>
           </div>
           <button
-            id="btn-goto-consultant-hub"
-            onClick={() => onNavigate('consultant_hub')}
+            id="btn-goto-partner-hub"
+            onClick={() => onNavigate('partner_hub')}
             className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-900 text-white text-[11px] font-bold transition-colors"
           >
             {language === 'mr' ? 'प्रवेश' : 'Open Hub'}
           </button>
         </div>
       </div>
+
+      {/* Commercial Rank (CMR) Modal */}
+      <CommercialRankModal
+        isOpen={showCmrModal}
+        onClose={() => setShowCmrModal(false)}
+        language={language}
+      />
     </div>
   );
 };

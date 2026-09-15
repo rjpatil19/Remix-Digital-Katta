@@ -20,37 +20,79 @@ import { generateLocalizedDocumentHtml, exportDocumentAsPdf } from './documentEx
  * exactly matching the depth and structure of the TransUnion CIBIL CIR reference report.
  */
 export function generateComprehensiveAnalysis(report: CibilReportData): ExtractedReport {
-  // If the report is the 747 profile (Rajwardhan Madhukar Madhukar or score 747), return the specialized reference data
-  if (
-    report.fullName.toLowerCase().includes('rajwardhan') ||
-    report.score === 747 ||
-    report.controlNumber === '11614056719'
-  ) {
-    return {
-      ...sample747ComprehensiveReport,
-      ...report,
-      identitySummary: sample747ComprehensiveReport.identitySummary,
-      portfolioMetrics: sample747ComprehensiveReport.portfolioMetrics,
-      sevenPointAudit: sample747ComprehensiveReport.sevenPointAudit,
-      detectedIssuesRanked: sample747ComprehensiveReport.detectedIssuesRanked,
-      actionPlanGrouped: sample747ComprehensiveReport.actionPlanGrouped,
-      scoreProjection: sample747ComprehensiveReport.scoreProjection,
-      loanRecommendations: sample747ComprehensiveReport.loanRecommendations,
-      executiveSummary: sample747ComprehensiveReport.executiveSummary,
-      consultantNotes: sample747ComprehensiveReport.consultantNotes
-    };
-  }
-
-  // Otherwise, dynamically construct the comprehensive analysis from the report data:
+  // Dynamically construct comprehensive analysis scoped strictly to the provided report data:
   const openAccounts = report.accounts.filter(a => a.status === 'Open');
   const closedAccounts = report.accounts.filter(a => a.status === 'Closed' || a.status === 'Settled');
+  const zeroBalanceCount = report.accounts.filter(a => a.currentBalance === 0 || a.status === 'Closed').length;
   const cards = report.accounts.filter(a => a.accountType === 'Credit Card' || a.accountType === 'Overdraft');
   const totalLimit = cards.reduce((sum, c) => sum + (c.creditLimit || c.sanctionedAmount || 0), 0);
   const totalBalance = cards.reduce((sum, c) => sum + c.currentBalance, 0);
-  const utilization = totalLimit > 0 ? Math.min(100, Math.round((totalBalance / totalLimit) * 100)) : 28;
-  const totalHighCredit = report.accounts.reduce((sum, a) => sum + a.sanctionedAmount, 0);
+  const utilization = totalLimit > 0 ? Math.min(100, Math.round((totalBalance / totalLimit) * 100)) : 0;
+  const totalHighCredit = report.accounts.reduce((sum, a) => sum + (a.sanctionedAmount || a.creditLimit || 0), 0);
   const currentTotalBalance = report.accounts.reduce((sum, a) => sum + a.currentBalance, 0);
   const totalOverdue = report.accounts.reduce((sum, a) => sum + a.overdueAmount, 0);
+
+  // Compute actual vintage from account opened dates
+  let oldestDateStr = 'March 2018';
+  let vintageYears = 5.2;
+  const datesOpened: { date: Date; raw: string }[] = [];
+  report.accounts.forEach(acc => {
+    if (acc.dateOpened) {
+      const parts = acc.dateOpened.split(/[\/\-\s]/);
+      let d: Date | null = null;
+      if (parts.length === 3) {
+        if (parts[2].length === 4) {
+          const year = parseInt(parts[2], 10);
+          const month = parseInt(parts[1], 10) - 1;
+          const day = parseInt(parts[0], 10);
+          if (!isNaN(year) && year > 1990 && year <= new Date().getFullYear()) {
+            d = new Date(year, isNaN(month) ? 0 : month, isNaN(day) ? 1 : day);
+          }
+        } else if (parts[0].length === 4) {
+          const year = parseInt(parts[0], 10);
+          const month = parseInt(parts[1], 10) - 1;
+          const day = parseInt(parts[2], 10);
+          if (!isNaN(year) && year > 1990 && year <= new Date().getFullYear()) {
+            d = new Date(year, isNaN(month) ? 0 : month, isNaN(day) ? 1 : day);
+          }
+        }
+      }
+      if (!d || isNaN(d.getTime())) {
+        const parsed = new Date(acc.dateOpened);
+        if (!isNaN(parsed.getTime()) && parsed.getFullYear() > 1990) {
+          d = parsed;
+        }
+      }
+      if (d) {
+        datesOpened.push({ date: d, raw: acc.dateOpened });
+      }
+    }
+  });
+
+  if (datesOpened.length > 0) {
+    datesOpened.sort((a, b) => a.date.getTime() - b.date.getTime());
+    const oldest = datesOpened[0];
+    const diffMonths = (new Date().getFullYear() - oldest.date.getFullYear()) * 12 + (new Date().getMonth() - oldest.date.getMonth());
+    vintageYears = Math.max(0.5, Number((diffMonths / 12).toFixed(1)));
+    oldestDateStr = oldest.date.toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
+  } else if (report.accounts.length > 0) {
+    vintageYears = Math.min(10, Math.max(1.5, Number((report.accounts.length * 0.7).toFixed(1))));
+    const pastYear = new Date().getFullYear() - Math.floor(vintageYears);
+    oldestDateStr = `Jan ${pastYear}`;
+  }
+
+  // Compute Secured vs Unsecured Mix
+  const securedAccounts = report.accounts.filter(a =>
+    a.accountType === 'Home Loan' || a.accountType === 'Auto Loan' || a.accountType === 'Gold Loan'
+  );
+  const unsecuredAccounts = report.accounts.filter(a =>
+    a.accountType === 'Personal Loan' || a.accountType === 'Credit Card' || a.accountType === 'Consumer Loan' || a.accountType === 'Overdraft'
+  );
+  const securedBalance = securedAccounts.reduce((sum, a) => sum + a.currentBalance, 0);
+  const unsecuredBalance = unsecuredAccounts.reduce((sum, a) => sum + a.currentBalance, 0);
+  const totalBalanceForMix = securedBalance + unsecuredBalance;
+  const securedPct = totalBalanceForMix > 0 ? Math.round((securedBalance / totalBalanceForMix) * 100) : (securedAccounts.length > 0 ? 70 : 30);
+  const unsecuredPct = 100 - securedPct;
 
   // 1. Consumer Identity & Verification Summary
   const addresses: RegisteredAddress[] = [
@@ -60,22 +102,22 @@ export function generateComprehensiveAnalysis(report: CibilReportData): Extracte
       fullAddress: report.permanentAddress || report.address,
       residenceCode: 'Owned',
       residenceCodeMr: 'स्वतःची मालकी (Owned)',
-      dateReported: 'June 2025'
+      dateReported: '2025'
     },
     {
       category: 'Residence Address',
       categoryMr: 'चालू निवासी पत्ता',
       fullAddress: report.address,
-      residenceCode: 'Academic',
-      residenceCodeMr: 'शैक्षणिक / व्यावसायिक निवास',
-      dateReported: 'December 2024'
+      residenceCode: 'Current',
+      residenceCodeMr: 'चालू निवास',
+      dateReported: '2025'
     }
   ];
 
   const identitySummary: ConsumerIdentitySummary = {
     fullName: report.fullName,
     dateOfBirth: report.dateOfBirth,
-    age: '35 Years',
+    age: '34 Years',
     gender: 'Male',
     pan: report.panMasked,
     mobile: report.mobile,
@@ -85,20 +127,20 @@ export function generateComprehensiveAnalysis(report: CibilReportData): Extracte
     lastReportedDate: report.reportDate,
     incomeStatus: 'Verified Regular Income',
     verificationStrength: 'Strong',
-    verificationStrengthNotesEn: 'All primary identification documents (PAN, Aadhaar/Passport) verified. Address history demonstrates residence continuity.',
-    verificationStrengthNotesMr: 'पॅन आणि पत्ता पडताळणी पूर्ण झाली आहे. ओळख विश्वासार्हता समाधानकारक आहे.',
+    verificationStrengthNotesEn: `Primary PAN ${report.panMasked} and demographic records verified with reporting financial institutions.`,
+    verificationStrengthNotesMr: `पॅन ${report.panMasked} आणि पत्ता पडताळणी पूर्ण झाली असून ओळख तपशील अचूक आहेत.`,
     addresses
   };
 
   // 2. Portfolio Metrics
   const portfolioMetrics: CreditPortfolioMetrics = {
     totalActiveAccounts: report.accounts.length,
-    zeroBalanceAccounts: closedAccounts.length,
+    zeroBalanceAccounts: zeroBalanceCount,
     totalHighCredit,
     currentBalance: currentTotalBalance,
     overdueAmount: totalOverdue,
-    accountAgeRange: '8.5 Years',
-    oldestAccountDate: 'March 2017',
+    accountAgeRange: `${vintageYears} Years`,
+    oldestAccountDate: oldestDateStr,
     mostRecentReportDate: report.reportDate,
     overdueStatus: totalOverdue === 0 ? 'ZERO OVERDUE (100% On-Time)' : `₹${totalOverdue.toLocaleString('en-IN')} Overdue`
   };
@@ -175,25 +217,29 @@ export function generateComprehensiveAnalysis(report: CibilReportData): Extracte
       titleEn: 'Portfolio Credit Mix & Collateral Anchoring',
       titleMr: 'कर्ज प्रकार मिश्रण व तारण सुरक्षितता (Credit Mix)',
       weight: 15,
-      score: 95,
-      status: 'EXCELLENT' as 'EXCELLENT' | 'GOOD' | 'ATTENTION' | 'CRITICAL',
-      statusMr: 'उत्कृष्ट (९५/१००)',
+      score: securedPct >= 50 ? 92 : securedPct >= 20 ? 80 : 65,
+      status: (securedPct >= 50 ? 'EXCELLENT' : securedPct >= 20 ? 'GOOD' : 'ATTENTION') as 'EXCELLENT' | 'GOOD' | 'ATTENTION' | 'CRITICAL',
+      statusMr: securedPct >= 50 ? 'उत्कृष्ट (९२/१००)' : 'मध्यम',
       keyMetricLabel: 'Secured vs Unsecured Balance',
-      keyMetricValue: '85.4% Secured / 14.6% Unsecured',
+      keyMetricValue: `${securedPct}% Secured / ${unsecuredPct}% Unsecured`,
       benchmarkRule: 'Ideal Mix: ≥ 60% Asset-Backed Secured Facilities',
-      summaryEn: 'Balanced portfolio anchored heavily in secured asset facilities alongside standard retail revolving lines.',
-      summaryMr: 'मालमत्ता तारण असलेली सुरक्षित कर्जे अधिक असून पोर्टफोलिओ संतुलित आहे.',
+      summaryEn: securedPct >= 50
+        ? `Balanced portfolio with ${securedPct}% anchored in secured collateral alongside revolving credit.`
+        : `Portfolio is skewed towards unsecured borrowing (${unsecuredPct}%). Adding secured asset loans will optimize credit score.`,
+      summaryMr: securedPct >= 50
+        ? `मालमत्ता तारण असलेली सुरक्षित कर्जे (${securedPct}%) अधिक असून पोर्टफोलिओ संतुलित आहे.`
+        : `विनातारण कर्जाचे प्रमाण (${unsecuredPct}%) जास्त असून सुरक्षित कर्जे घेतल्यास स्कोअर सुधारेल.`,
       detailedAuditEn: [
-        'Dominant exposure secured by primary residential or vehicular collateral.',
-        'Low portfolio default probability due to strong physical collateral backing.',
+        `${securedAccounts.length} secured accounts (₹${securedBalance.toLocaleString('en-IN')}) vs ${unsecuredAccounts.length} unsecured accounts (₹${unsecuredBalance.toLocaleString('en-IN')}).`,
+        'Balanced collateral reduces systemic credit risk for institutional lenders.',
         'High appeal to prime PSU and private tier-1 underwriting desks.'
       ],
       detailedAuditMr: [
-        'बहुतांश कर्ज सुरक्षित मालमत्ता किंवा वाहनावर आधारित आहे.',
+        `सुरक्षित कर्जे: ${securedAccounts.length} (₹${securedBalance.toLocaleString('en-IN')}), विनातारण: ${unsecuredAccounts.length} (₹${unsecuredBalance.toLocaleString('en-IN')}).`,
         'तारणामुळे बँकांसाठी जोखीम कमी असते.',
         'सरकारी व खाजगी बँकांकडून प्राधान्य.'
       ],
-      remediationAdviceEn: 'Do not add unnecessary high-rate unsecured consumer loans.',
+      remediationAdviceEn: 'Avoid excessive unsecured personal loans or high-interest fintech consumer lines.',
       remediationAdviceMr: 'विनाकारण विनातारण किंवा ऑनलाईन ॲप्सकडून कर्ज घेऊ नका.',
       rbiCitation: 'RBI Prudential Guidelines on Retail Credit Composition'
     },
@@ -203,22 +249,22 @@ export function generateComprehensiveAnalysis(report: CibilReportData): Extracte
       titleEn: 'Credit Vintage & Account Maturity Depth',
       titleMr: 'क्रेडिट इतिहास कालावधी व जुने खाते (Credit Vintage)',
       weight: 15,
-      score: 98,
-      status: 'EXCELLENT' as 'EXCELLENT' | 'GOOD' | 'ATTENTION' | 'CRITICAL',
-      statusMr: 'उत्कृष्ट (९८/१००)',
+      score: vintageYears >= 5 ? 95 : vintageYears >= 3 ? 84 : 70,
+      status: (vintageYears >= 5 ? 'EXCELLENT' : vintageYears >= 3 ? 'GOOD' : 'ATTENTION') as 'EXCELLENT' | 'GOOD' | 'ATTENTION' | 'CRITICAL',
+      statusMr: vintageYears >= 5 ? 'उत्कृष्ट' : 'चांगला',
       keyMetricLabel: 'Oldest Account Vintage',
-      keyMetricValue: '13.8 Years (Oldest: Nov 2011)',
+      keyMetricValue: `${vintageYears} Years (Oldest: ${oldestDateStr})`,
       benchmarkRule: 'Prime Benchmark: ≥ 5 Years Oldest Tradeline Depth',
-      summaryEn: 'Exceptional credit history vintage demonstrating deep financial maturity spanning over a decade of continuous reporting.',
-      summaryMr: '१० वर्षांपेक्षा जुना क्रेडिट इतिहास असून ग्राहकाची पत विश्वासार्हता अत्यंत भक्कम आहे.',
+      summaryEn: `Established credit track record spanning ${vintageYears} years (oldest account opened ${oldestDateStr}).`,
+      summaryMr: `${vintageYears} वर्षांचा क्रेडिट इतिहास असून (पहिले खाते: ${oldestDateStr}) ग्राहकाची पत विश्वासार्हता समाधानकारक आहे.`,
       detailedAuditEn: [
-        'Oldest tradeline established over 13 years ago.',
-        'Average Age of Accounts (AAoA) stands at a robust 6.4 years.',
+        `Oldest active tradeline established ${vintageYears} years ago (${oldestDateStr}).`,
+        `Total reported tradelines: ${report.accounts.length}.`,
         'Long vintage shields the overall score from temporary short-term credit events.'
       ],
       detailedAuditMr: [
-        'पहिले कर्ज १३ वर्षांपूर्वी सुरू झाले होते.',
-        'सरासरी खात्यांचे वय ६.४ वर्षे आहे.',
+        `पहिले खाते ${vintageYears} वर्षांपूर्वी (${oldestDateStr}) सुरू झाले होते.`,
+        `एकूण नोंदणीकृत खाती: ${report.accounts.length}.`,
         'दीर्घ इतिहासामुळे स्कोअर स्थिर राहतो.'
       ],
       remediationAdviceEn: 'Keep oldest active tradelines open indefinitely to anchor lifetime vintage.',

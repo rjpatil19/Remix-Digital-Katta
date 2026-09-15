@@ -32,7 +32,7 @@ import { generateSampleCibilPdfBuffer } from '../../utils/pdfReportParser';
 import { Phase2Service } from '../../services/phase2Service';
 import { ReportQuotaService, QuotaCheckResult } from '../../services/reportQuotaService';
 import { PaymentModal } from '../modals/PaymentModal';
-import { ConsultantQuotaModal } from '../modals/ConsultantQuotaModal';
+import { PartnerQuotaModal } from '../modals/PartnerQuotaModal';
 import { consultantClientsData } from '../../data/mockData';
 import { t } from '../../i18n';
 
@@ -52,13 +52,8 @@ export const UploadReportScreen: React.FC<UploadReportScreenProps> = ({
   onSwitchToAdmin
 }) => {
   const [dragActive, setDragActive] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<UploadableFileInput | null>({
-    name: 'CIBIL_Credit_Analysis_Report_Rajwardhan_747.html',
-    size: COMPREHENSIVE_747_HTML.length,
-    type: 'text/html',
-    rawText: COMPREHENSIVE_747_HTML
-  });
-  const [password, setPassword] = useState('RAHU1408');
+  const [selectedFile, setSelectedFile] = useState<UploadableFileInput | null>(null);
+  const [password, setPassword] = useState('');
   const [hasPassword, setHasPassword] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [isParsing, setIsParsing] = useState(false);
@@ -73,7 +68,7 @@ export const UploadReportScreen: React.FC<UploadReportScreenProps> = ({
   // Quota and Rule enforcement states
   const [selectedClientId, setSelectedClientId] = useState<string>('cli-101');
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [showConsultantQuotaModal, setShowConsultantQuotaModal] = useState(false);
+  const [showPartnerQuotaModal, setShowPartnerQuotaModal] = useState(false);
   const [quotaKey, setQuotaKey] = useState(0);
 
   const selectedClient = consultantClientsData.find((c) => c.id === selectedClientId) || consultantClientsData[0];
@@ -375,9 +370,9 @@ export const UploadReportScreen: React.FC<UploadReportScreenProps> = ({
         setShowPaymentModal(true);
         return;
       }
-      if (userRole === 'consultant') {
-        // Rule 2: Consultant 2 reports allowed for one client limit reached
-        setShowConsultantQuotaModal(true);
+      if (userRole === 'partner') {
+        // Rule 2: Partner 2 reports allowed for one client limit reached
+        setShowPartnerQuotaModal(true);
         return;
       }
     }
@@ -516,7 +511,7 @@ export const UploadReportScreen: React.FC<UploadReportScreenProps> = ({
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-black text-slate-900">
-                      {language === 'mr' ? 'नियम २: सल्लागार मर्यादा' : 'Rule 2: Consultant Quota'}
+                      {language === 'mr' ? 'नियम २: पार्टनर मर्यादा' : 'Rule 2: Partner Quota'}
                     </span>
                     <span
                       className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
@@ -1058,14 +1053,14 @@ export const UploadReportScreen: React.FC<UploadReportScreenProps> = ({
         onPaymentSuccess={handlePaymentSuccess}
       />
 
-      {/* Consultant Quota Modal for Rule 2 (Max 2 reports per client) */}
-      <ConsultantQuotaModal
-        isOpen={showConsultantQuotaModal}
-        onClose={() => setShowConsultantQuotaModal(false)}
+      {/* Partner Quota Modal for Rule 2 (Max 2 reports per client) */}
+      <PartnerQuotaModal
+        isOpen={showPartnerQuotaModal}
+        onClose={() => setShowPartnerQuotaModal(false)}
         clientName={selectedClient.name}
-        reportsCount={quotaVerification.currentCount}
+        reportCount={quotaVerification.currentCount}
         language={language}
-        onSwitchToAdmin={onSwitchToAdmin}
+        onSwitchToAdmin={onSwitchToAdmin || (() => {})}
       />
     </div>
   );
